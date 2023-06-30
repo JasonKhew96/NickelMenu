@@ -74,14 +74,10 @@ NM_ACTION_(nickel_open) {
     if (dlsym(RTLD_DEFAULT, "_ZN11MainNavViewC1EP7QWidget")) {
         NM_LOG("nickel_open: detected firmware >15505 (new nav tab bar), checking special cases");
 
-        if (!strcmp(arg1, "library") && !strcmp(arg2, "dropbox")) {
+        if (!strcmp(arg1, "library") && (!strcmp(arg2, "dropbox") || !strcmp(arg2, "google_drive"))) {
             //libnickel 4.23.15505 * _ZN14MoreControllerC1Ev
             MoreController *(*MoreController__MoreController)(MoreController* _this);
             NM_ACT_XSYM(MoreController__MoreController, "_ZN14MoreControllerC1Ev", "could not dlsym MoreController::MoreController");
-
-            //libnickel 4.23.15505 * _ZN14MoreController7dropboxEv
-            void (*MoreController_dropbox)(MoreController* _this);
-            NM_ACT_XSYM(MoreController_dropbox, "_ZN14MoreController7dropboxEv", "could not dlsym MoreController::dropbox");
 
             //libnickel 4.23.15505 * _ZN14MoreControllerD0Ev
             MoreController *(*MoreController__deMoreController)(MoreController* _this);
@@ -94,7 +90,18 @@ NM_ACTION_(nickel_open) {
             mc = MoreController__MoreController(mc);
             NM_CHECK(nullptr, mc, "MoreController::MoreController returned null pointer");
 
-            MoreController_dropbox(mc);
+            if (!strcmp(arg2, "dropbox")) {
+                //libnickel 4.23.15505 * _ZN14MoreController7dropboxEv
+                void (*MoreController_dropbox)(MoreController* _this);
+                NM_ACT_XSYM(MoreController_dropbox, "_ZN14MoreController7dropboxEv", "could not dlsym MoreController::dropbox");
+                MoreController_dropbox(mc);
+            }
+            if (!strcmp(arg2, "google_drive")) {
+                //libnickel 4.37.21533 * _ZN14MoreController11googleDriveEv
+                void (*MoreController_googledrive)(MoreController* _this);
+                NM_ACT_XSYM(MoreController_googledrive, "_ZN14MoreController11googleDriveEv", "could not dlsym MoreController::googleDrive");
+                MoreController_googledrive(mc);
+            }
 
             // Clean up after ourselves
             MoreController__deMoreController(mc);
